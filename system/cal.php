@@ -1,5 +1,5 @@
 <?php
-include 'conn.php';
+require '../config/conn.php';
 include 'top.php';
 ?>
 

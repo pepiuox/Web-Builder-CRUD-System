@@ -17,39 +17,12 @@
                             ?>
                         <li class="nav-item dropdown"><a class="nav-link dropdown-toggle"
                                                          href="#" id="navbarDropdownMenuLink" data-toggle="dropdown"
-                                                         aria-haspopup="true" aria-expanded="false"> Granjas </a>
+                                                         aria-haspopup="true" aria-expanded="false"> Tables </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                                <li><a class="dropdown-item" href="index.php?w=list&tbl=granjas">Granjas</a></li>
-                                <li><a class="dropdown-item" href="index.php?w=list&tbl=personal">Personal</a></li>
-                                <li><a class="dropdown-item" href="index.php?w=list&tbl=empresa">Empresa</a></li>
-                                <li><a class="dropdown-item"
-                                       href="../index.php?w=list&tbl=empresa_integrada">Empresa
-                                        Integrada</a></li>
-                            </ul></li>
-                        <li class="nav-item dropdown"><a class="nav-link dropdown-toggle"
-                                                         href="#" id="navbarDropdownMenuLink" data-toggle="dropdown"
-                                                         aria-haspopup="true" aria-expanded="false"> Contabilidad </a>
-                            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                                <li><a class="dropdown-item" href="index.php?w=list&tbl=ingresos">Ingresos</a></li>
-                                <li><a class="dropdown-item" href="index.php?w=list&tbl=salidas">Salidas</a></li>
-                                <li><a class="dropdown-item" href="pagos.php">Pagos</a></li>
-                                <li><a class="dropdown-item" href="personal_despacho.php">Personal despacho</a></li>
-                                <li><a class="dropdown-item" href="despacho.php">Despacho</a></li>						
-                                <li><a class="dropdown-item"
-                                       href="index.php?w=list&tbl=fecha_laboral">Fecha Laboral</a></li>
-                                <li><a class="dropdown-item"
-                                       href="index.php?w=list&tbl=gratificaciones">Gratificaciones</a></li>
-                                <li><a class="dropdown-item"
-                                       href="index.php?w=list&tbl=vacaciones">Vacaciones</a></li>
-                            </ul></li>
-                        <li class="nav-item dropdown"><a class="nav-link dropdown-toggle"
-                                                         href="#" id="navbarDropdownMenuLink" data-toggle="dropdown"
-                                                         aria-haspopup="true" aria-expanded="false">Almacenes</a>
-                            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                                <li><a class="dropdown-item" href="index.php?w=list&tbl=almacen">Almacen</a></li>
-                                <li><a class="dropdown-item"
-                                       href="index.php?w=list&tbl=inventario">Inventario</a></li>
-                            </ul></li>
+                                <li><a class="dropdown-item" href="index.php?w=list&tbl=granjas">Table</a></li>
+
+                            </ul>
+                        </li>                                                
                         <li class="nav-item"><a class="nav-link" href="buscar.php">Buscar
                                 contenido</a></li>
                         <?php
@@ -67,6 +40,7 @@
                                         tablas</a></li>
                                 <li><a class="dropdown-item" href="dashboard.php">Usuarios</a></li>
                             </ul></li>
+                        <li class="nav-item"><a class="nav-link" href="../builder/list.php">Crear páginas</a></li>
                         <?php
                     }
 

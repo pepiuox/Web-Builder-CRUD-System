@@ -4,7 +4,7 @@ if (!isset($_SESSION)) {
 }
 $mypage = $_SERVER['PHP_SELF'];
 $page = $mypage;
-require 'conn.php';
+require '../config/conn.php';
 require 'autoload.php';
 include 'top.php';
 ?>

@@ -2,11 +2,11 @@
 if (! isset($_SESSION)) {
     session_start();
 }
-require 'conn.php';
+require '../config/conn.php';
 require 'autoload.php';
 $level = new AccessLevel();
 $login = new UserClass();
-include 'functions/functions.php';
+include '../functions/functions.php';
 include 'top.php';
 ?>
 </head>

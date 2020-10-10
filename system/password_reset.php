@@ -2,7 +2,7 @@
 if (!isset($_SESSION)) {
     session_start();
 }
-require 'conn.php';
+require '../config/conn.php';
 require 'autoload.php';
 $level = new AccessLevel();
 $login = new UserClass();

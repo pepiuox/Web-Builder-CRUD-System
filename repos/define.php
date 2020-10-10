@@ -1,6 +1,6 @@
 <?php
 define('DOMAIN_SITE', 'www.yourdomain.com');
- define('SITE_NAME', 'ESRAPI');
+ define('SITE_NAME', 'Your site');
  define('SITE_DESC', 'Your keywords for your domains');
  define('SITE_KEYWORDS', 'Your keywords for your domains');
  define('SITE_DESCRIPTION', 'Your keywords for your domains');
