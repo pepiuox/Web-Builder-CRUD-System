@@ -1,28 +1,23 @@
 <?php
 
-class MyCRUD
-{
+class MyCRUD {
 
-    public function protect($string)
-    {
+    public function protect($string) {
         return htmlspecialchars(trim($string), ENT_QUOTES);
     }
 
-    public function sQueries($tble)
-    {
+    public function sQueries($tble) {
         global $conn;
         $sql = "SELECT * FROM $tble";
         return $conn->query($sql);
     }
 
-    public function wQueries($query)
-    {
+    public function wQueries($query) {
         global $conn;
         return $conn->query($query);
     }
 
-    public function getID($tble)
-    {
+    public function getID($tble) {
         if ($result = $this->sQueries($tble)) {
             /* Get field information for 2nd column */
             $result->field_seek(0);
@@ -31,8 +26,7 @@ class MyCRUD
         }
     }
 
-    public function getColumnNames($tble)
-    {
+    public function getColumnNames($tble) {
         $sql = 'DESCRIBE ' . $tble;
         $result = $this->wQueries($sql);
         $rows = array();
@@ -42,8 +36,7 @@ class MyCRUD
         return $rows;
     }
 
-    public function showCol($tble)
-    {
+    public function showCol($tble) {
         $nDB = DBNAME;
         $sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '$nDB' AND TABLE_NAME = '$tble'";
         $result = $this->wQueries($sql);
@@ -54,8 +47,7 @@ class MyCRUD
         return $columnArr;
     }
 
-    public function viewColumns($tble)
-    {
+    public function viewColumns($tble) {
         $hostDB = DBHOST;
         $userDB = DBUSER;
         $passDB = DBPASS;
@@ -71,8 +63,7 @@ class MyCRUD
             AND table_name = '$tble'")->fetchAll(PDO::FETCH_OBJ);
     }
 
-    public function tblQueries($tble)
-    {
+    public function tblQueries($tble) {
         $sqlq = "SELECT * FROM table_queries WHERE name_table='$tble' AND input_type IS NOT NULL";
         $resultq = $this->wQueries($sqlq);
         $rowcq = $resultq->num_rows;
@@ -116,8 +107,7 @@ class MyCRUD
         return;
     }
 
-    public function getList($sql, $col)
-    {
+    public function getList($sql, $col) {
         $result = $this->wQueries($sql);
 
         if (mysqli_num_fields($result) > 0) {
@@ -138,7 +128,7 @@ class MyCRUD
 <tbody>' . "\n";
             $r = 1;
             while ($td = $result->fetch_array()) {
-                $nr = $r ++;
+                $nr = $r++;
                 echo '<tr id="row_' . $nr . '">';
                 foreach ($ths as $tnms) {
                     if ($tnms === $col) {
@@ -154,8 +144,7 @@ class MyCRUD
         }
     }
 
-    public function listColm($tble)
-    {
+    public function listColm($tble) {
         $result = $this->sQueries($tble);
 
         $i = 0;
@@ -180,7 +169,7 @@ class MyCRUD
             $searching = 1;
             $qry = protect($_POST['qry']);
         }
-        $page = (int) (! isset($_GET["page"]) ? 1 : $_GET["page"]);
+        $page = (int) (!isset($_GET["page"]) ? 1 : $_GET["page"]);
         $limit = 20;
         $startpoint = ($page * $limit) - $limit;
         if ($page == 1) {
@@ -201,7 +190,7 @@ class MyCRUD
         // end pagination
         if ($result->num_rows > 0) {
             $i = 0;
-            while ($row = mysqli_fetch_row($result)) {
+            while ($row = $result->fetch_row()) {
                 echo '<tr>' . "\n";
                 $count = count($row);
                 $y = 0;
@@ -246,8 +235,7 @@ class MyCRUD
         mysqli_free_result($result);
     }
 
-    public function getDatalist($tble)
-    {
+    public function getDatalist($tble) {
         global $conn;
         $total_pages = $conn->query("SELECT * FROM $tble")->num_rows;
 
@@ -317,59 +305,58 @@ class MyCRUD
             if (ceil($total_pages / $num_results_on_page) > 0) {
                 $url = 'index.php?w=list&tbl=' . $tble;
                 ?>
-<nav aria-label="navigation mx-auto">
-	<ul class="pagination justify-content-center">
-		<?php if ($page > 1){ ?>
-		<li class="prev"><a
-			href="<?php echo $url;?>&page=<?php echo $page-1 ?>">Anterior</a></li>
-		<?php } ?>
+                <nav aria-label="navigation mx-auto">
+                    <ul class="pagination justify-content-center">
+                        <?php if ($page > 1) { ?>
+                            <li class="prev"><a
+                                    href="<?php echo $url; ?>&page=<?php echo $page - 1 ?>">Anterior</a></li>
+                            <?php } ?>
 
-		<?php if ($page > 3){ ?>
-		<li class="start"><a href="<?php echo $url;?>&page=1">1</a></li>
-		<li class="dots">...</li>
-		<?php } ?>
+                        <?php if ($page > 3) { ?>
+                            <li class="start"><a href="<?php echo $url; ?>&page=1">1</a></li>
+                            <li class="dots">...</li>
+                        <?php } ?>
 
-		<?php if ($page-2 > 0){ ?>
-		<li class="page"><a
-			href="<?php echo $url;?>&page=<?php echo $page-2 ?>"><?php echo $page-2 ?></a></li>
-		<?php } ?>
-		<?php if ($page-1 > 0){ ?>
-		<li class="page"><a
-			href="<?php echo $url;?>&page=<?php echo $page-1 ?>"><?php echo $page-1 ?></a></li>
-		<?php } ?>
+                        <?php if ($page - 2 > 0) { ?>
+                            <li class="page"><a
+                                    href="<?php echo $url; ?>&page=<?php echo $page - 2 ?>"><?php echo $page - 2 ?></a></li>
+                            <?php } ?>
+                            <?php if ($page - 1 > 0) { ?>
+                            <li class="page"><a
+                                    href="<?php echo $url; ?>&page=<?php echo $page - 1 ?>"><?php echo $page - 1 ?></a></li>
+                            <?php } ?>
 
-		<li class="currentpage"><a
-			href="<?php echo $url;?>&page=<?php echo $page ?>"><?php echo $page ?></a></li>
+                        <li class="currentpage"><a
+                                href="<?php echo $url; ?>&page=<?php echo $page ?>"><?php echo $page ?></a></li>
 
-		<?php if ($page+1 < ceil($total_pages / $num_results_on_page)+1){ ?>
-		<li class="page"><a
-			href="<?php echo $url;?>&page=<?php echo $page+1 ?>"><?php echo $page+1 ?></a></li>
-		<?php } ?>
-		<?php if ($page+2 < ceil($total_pages / $num_results_on_page)+1){ ?>
-		<li class="page"><a
-			href="<?php echo $url;?>&page=<?php echo $page+2 ?>"><?php echo $page+2 ?></a></li>
-		<?php } ?>
+                        <?php if ($page + 1 < ceil($total_pages / $num_results_on_page) + 1) { ?>
+                            <li class="page"><a
+                                    href="<?php echo $url; ?>&page=<?php echo $page + 1 ?>"><?php echo $page + 1 ?></a></li>
+                            <?php } ?>
+                            <?php if ($page + 2 < ceil($total_pages / $num_results_on_page) + 1) { ?>
+                            <li class="page"><a
+                                    href="<?php echo $url; ?>&page=<?php echo $page + 2 ?>"><?php echo $page + 2 ?></a></li>
+                            <?php } ?>
 
-		<?php if ($page < ceil($total_pages / $num_results_on_page)-2){ ?>
-		<li class="dots">...</li>
-		<li class="end"><a
-			href="<?php echo $url;?>&page=<?php echo ceil($total_pages / $num_results_on_page) ?>"><?php echo ceil($total_pages / $num_results_on_page) ?></a></li>
-		<?php } ?>
+                        <?php if ($page < ceil($total_pages / $num_results_on_page) - 2) { ?>
+                            <li class="dots">...</li>
+                            <li class="end"><a
+                                    href="<?php echo $url; ?>&page=<?php echo ceil($total_pages / $num_results_on_page) ?>"><?php echo ceil($total_pages / $num_results_on_page) ?></a></li>
+                            <?php } ?>
 
-		<?php if ($page < ceil($total_pages / $num_results_on_page)){ ?>
-		<li class="next"><a
-			href="<?php echo $url;?>&page=<?php echo $page+1 ?>">Siguiente</a></li>
-		<?php } ?>
-	</ul>
-</nav>
-<?php
+                        <?php if ($page < ceil($total_pages / $num_results_on_page)) { ?>
+                            <li class="next"><a
+                                    href="<?php echo $url; ?>&page=<?php echo $page + 1 ?>">Siguiente</a></li>
+                            <?php } ?>
+                    </ul>
+                </nav>
+                <?php
             }
             $stmt->close();
         }
     }
 
-    public function listData($tble)
-    {
+    public function listData($tble) {
         $colms = $this->viewColumns($tble);
         $ncol = $this->getID($tble);
 
@@ -408,7 +395,7 @@ class MyCRUD
         $range = 10;
         $startpage = 1;
 
-        if (isset($_GET['page']) && ! empty($_GET['page'])) {
+        if (isset($_GET['page']) && !empty($_GET['page'])) {
             $pg = $this->protect($_GET['page']);
             $pg = filter_var($pg, FILTER_SANITIZE_NUMBER_INT);
             $page = $pg - $start;
@@ -481,7 +468,7 @@ class MyCRUD
         // start body table
         while ($row = mysqli_fetch_row($res)) {
             echo '<tr>' . "\n";
-            $rw = mysqli_fetch_array($result);
+            $rw = $result->fetch_array();
             $count = count($row);
 
             $y = 0;
@@ -514,7 +501,7 @@ class MyCRUD
                     }
                 }
                 next($row);
-                $y ++;
+                $y++;
             }
 
             $i_row = $row[0];
@@ -524,7 +511,7 @@ class MyCRUD
                 </td>';
 
             echo '</tr>' . "\n";
-            $i ++;
+            $i++;
         }
         echo '</tbody>' . "\n";
         echo '</table>' . "\n";
@@ -554,7 +541,7 @@ class MyCRUD
             }
             echo '">Prev</a></li>' . "\n";
             //
-            for ($x = 1; $x <= $range; $x ++) {
+            for ($x = 1; $x <= $range; $x++) {
                 if ($pg < $endpage) {
                     echo '<li class="page-item ';
                     if ($pg == ($page + 1)) {
@@ -566,7 +553,7 @@ class MyCRUD
                     } else {
                         echo $url . "&page=" . $pg;
                     }
-                    echo '">' . $pg ++ . '</a></li>' . "\n";
+                    echo '">' . $pg++ . '</a></li>' . "\n";
                 } elseif ($pg > $endpage) {
                     continue;
                 } else {
@@ -580,7 +567,7 @@ class MyCRUD
                     } else {
                         echo $url . "&page=" . $pg;
                     }
-                    echo '">' . $pg ++ . '</a></li>' . "\n";
+                    echo '">' . $pg++ . '</a></li>' . "\n";
                 }
             }
             //
@@ -607,8 +594,7 @@ class MyCRUD
         }
     }
 
-    public function joinCols($tble)
-    {
+    public function joinCols($tble) {
         global $conn;
         $columns = $this->viewColumns($tble);
         $ncol = $this->getID($tble);
@@ -852,8 +838,7 @@ class MyCRUD
     }
 
     // addrow
-    public function addData($tble)
-    {
+    public function addData($tble) {
         global $conn;
 
         $ncol = $this->getID($tble);
@@ -907,8 +892,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // addScript
-    public function updateScript($tble, $id)
-    {
+    public function updateScript($tble, $id) {
         $result = $this->sQueries($tble);
         $ncol = $this->getID($tble);
         $r = 0;
@@ -946,8 +930,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
         fclose($myfile);
     }
 
-    public function inputQEdit($tble, $id)
-    {
+    public function inputQEdit($tble, $id) {
         $columns = $this->viewColumns($tble);
         $ncol = $this->getID($tble);
         $resultq = $this->wQueries("SELECT * FROM table_queries WHERE name_table='$tble'");
@@ -1200,8 +1183,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // editrow
-    public function editData($tble, $id)
-    {
+    public function editData($tble, $id) {
         $columns = $this->viewColumns($tble);
         foreach ($columns as $finfo) {
             if ($finfo->name === $this->getID($tble)) {
@@ -1233,8 +1215,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // deleterow
-    function deleteData($tble, $id)
-    {
+    function deleteData($tble, $id) {
         $ncol = $this->getID($tble);
         $qresult = $this->wQueries("select * from $tble where $ncol = '$id' ");
         echo '<form role="form" id="delete_' . $tble . '" method="POST">' . "\n";
@@ -1258,8 +1239,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // adduery
-    public function addQuery($tble)
-    {
+    public function addQuery($tble) {
         $qresult = $this->sQueries($tble);
         echo '<form method="post" role="form" id="query_' . $tble . '">' . "\n";
         while ($finfo = $qresult->fetch_field()) {
@@ -1281,8 +1261,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // addpost
-    public function addpost($tble)
-    {
+    public function addpost($tble) {
         $result = $this->sQueries($tble);
         $r = 0;
         $postnames = array();
@@ -1297,8 +1276,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // updatedata
-    public function updateData($tble)
-    {
+    public function updateData($tble) {
         $result = $this->sQueries($tble);
         $varnames = array();
         $r = 0;
@@ -1314,8 +1292,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // ifmpty
-    public function ifMpty($tble)
-    {
+    public function ifMpty($tble) {
         $result = $this->sQueries($tble);
         $checkd = array();
         $r = 0;
@@ -1331,8 +1308,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // addttl
-    public function addTtl($tble)
-    {
+    public function addTtl($tble) {
         $result = $this->sQueries($tble);
         $checkd = array();
         $r = 0;
@@ -1348,8 +1324,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // addtpost
-    public function addTPost($tble)
-    {
+    public function addTPost($tble) {
         $result = $this->sQueries($tble);
         $checkd = array();
         $r = 0;
@@ -1364,8 +1339,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // ifempty
-    public function ifEmpty($tble)
-    {
+    public function ifEmpty($tble) {
         $result = $this->sQueries($tble);
         $checkd = array();
         $r = 0;
@@ -1381,11 +1355,10 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
 
     // ------------------------------->
     // edit row
-    public function editColm($tble, $id)
-    {
+    public function editColm($tble, $id) {
         $ncol = $this->getID($tble);
         $result = $this->wQueries("select * from $tble where $ncol = '$id' ");
-        if (! $result) {
+        if (!$result) {
             return 'ERROR:' . mysqli_error();
         } else {
             $i = 0;
@@ -1432,11 +1405,10 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
     }
 
     // add colm
-    public function addColm($tble)
-    {
+    public function addColm($tble) {
         $result = $this->sQueries($tble);
 
-        if (! $result) {
+        if (!$result) {
             return 'ERROR:' . mysqli_error();
         } else {
             $i = 0;
@@ -1470,8 +1442,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
         }
     }
 
-    public function supdateData($tble)
-    {
+    public function supdateData($tble) {
         $result = $this->sQueries($tble);
         $varnames = array();
         $r = 0;
@@ -1483,8 +1454,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
         }
     }
 
-    public function supdateD($tble)
-    {
+    public function supdateD($tble) {
         $result = $this->sQueries($tble);
         $varnames = array();
         $r = 0;
@@ -1496,8 +1466,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
         }
     }
 
-    public function addReq($tble)
-    {
+    public function addReq($tble) {
         $result = $this->sQueries($tble);
         $r = 0;
         $varnames = '';
@@ -1511,8 +1480,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
         }
     }
 
-    public function addReqch($tble)
-    {
+    public function addReqch($tble) {
         $result = $this->sQueries($tble);
         $checkd = array();
         $r = 0;
@@ -1526,8 +1494,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
         }
     }
 
-    public function addvTtl($tble)
-    {
+    public function addvTtl($tble) {
         $result = $this->sQueries($tble);
         $checkd = array();
         $r = 0;
@@ -1541,8 +1508,7 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
         }
     }
 
-    public function sValues($tble)
-    {
+    public function sValues($tble) {
         $result = $this->sQueries($tble);
         $r = 0;
         if (mysqli_num_fields($result) > $r) {
@@ -1554,6 +1520,6 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
             }
         }
     }
-}
 
+}
 ?>

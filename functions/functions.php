@@ -1,11 +1,11 @@
 <?php
+
 function protect($string) {
-    return htmlspecialchars(trim($string), ENT_QUOTES);     
+    return htmlspecialchars(trim($string), ENT_QUOTES);
 }
 
 function randomHash($lenght = 7) {
     return substr(md5(rand()), 0, $lenght);
-     
 }
 
 function isValidURL($url) {
@@ -27,7 +27,7 @@ function check_string($string) {
         'to:',
         'from:',
     );
-    foreach($bad_strings as $bad_string) {
+    foreach ($bad_strings as $bad_string) {
         if (eregi($bad_string, strtolower($string))) {
             return false;
         }
@@ -43,7 +43,7 @@ function check_newlines($string) {
 }
 
 function check_post_request() {
-    if ($_SERVER['REQUEST_METHOD'] != 'POST'){
+    if ($_SERVER['REQUEST_METHOD'] != 'POST') {
         return false;
     }
     return true;
@@ -182,7 +182,7 @@ function admin_pagination($query, $ver, $per_page = 10, $page = 1, $url = '?') {
 function web_pagination($query, $ver, $per_page = 10, $page = 1, $url = '?') {
     global $conn;
     $query = $conn->query("SELECT * FROM $query");
-    $total = $query->num_rows;  
+    $total = $query->num_rows;
     $adjacents = "2";
 
     $page = ($page == 0 ? 1 : $page);
@@ -216,8 +216,7 @@ function web_pagination($query, $ver, $per_page = 10, $page = 1, $url = '?') {
                 $pagination .= "<li class='disabled'>...</li>";
                 $pagination .= "<li><a href='$ver/$lpm1'>$lpm1</a></li>";
                 $pagination .= "<li><a href='$ver/$lastpage'>$lastpage</a></li>";
-            }
-            elseif ($lastpage - ($adjacents * 2) > $page && $page > ($adjacents * 2)) {
+            } elseif ($lastpage - ($adjacents * 2) > $page && $page > ($adjacents * 2)) {
                 $pagination .= "<li><a href='$ver/1'>1</a></li>";
                 $pagination .= "<li><a href='$ver/2'>2</a></li>";
                 $pagination .= "<li class='disabled'><a>...</a></li>";
@@ -230,8 +229,7 @@ function web_pagination($query, $ver, $per_page = 10, $page = 1, $url = '?') {
                 $pagination .= "<li class='disabled'><a>..</a></li>";
                 $pagination .= "<li><a href='$ver/$lpm1'>$lpm1</a></li>";
                 $pagination .= "<li><a href='$ver/$lastpage'>$lastpage</a></li>";
-            }
-            else {
+            } else {
                 $pagination .= "<li><a href='$ver/1'>1</a></li>";
                 $pagination .= "<li><a href='$ver/2'>2</a></li>";
                 $pagination .= "<li class='disabled'><a>..</a></li>";
