@@ -103,6 +103,10 @@ $level = new AccessLevel();
                                 <!-- small box -->
                                 <div class="small-box bg-warning">
                                     <div class="inner">
+                                    <?php 
+                                    
+                                   
+                                    ?>
                                         <h3>44</h3>
 
                                         <p>User Registrations</p>

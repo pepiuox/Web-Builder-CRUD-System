@@ -13,9 +13,13 @@
  */
 class userForgot {
 
-    var $baseurl;
+    public $baseurl;
+    private $connection;
 
     public function __construct() {
+        // Require credentials for DB connection.
+        global $conn;
+        
         $this->baseurl = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
         /* If forgot password form data is posted call forgotPassword() function. */
         if (isset($_POST["forgotPassword"])) {
@@ -35,6 +39,18 @@ class userForgot {
 
     private function enfKey($len = 64) {
         return substr(sha1(openssl_random_pseudo_bytes(19)), - $len);
+    }
+    
+    private function randHash($len = 32) {
+        return substr(sha1(openssl_random_pseudo_bytes(21)), - $len);
+    }
+    
+    private function randKey($len = 32) {
+        return substr(sha1(openssl_random_pseudo_bytes(13)), - $len);
+    }
+    
+    private function encKey($len = 32) {
+        return substr(sha1(openssl_random_pseudo_bytes(17)), - $len);
     }
     
     private function ende_crypter($action, $string) {
@@ -60,15 +76,13 @@ class userForgot {
      */
 
     private function forgotPassword() {
-// Require credentials for DB connection.
-        global $conn;
 
         if (isset($_POST['forgotPassword'])) {
             $email = trim($_POST['email']);
 
 // Require credentials for DB connection.
 // Check if username or email is already taken.
-            $stmt = $conn->prepare("SELECT username, email, mkhash FROM uverify WHERE email = ?");
+            $stmt = $this->connection->prepare("SELECT username, email, mkhash FROM uverify WHERE email = ?");
             $stmt->bind_param("s", $email);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -81,14 +95,14 @@ class userForgot {
 
                 $forgot_password_key = $this->enfKey();
                 $inactive = 0;
-                $stmt = $conn->prepare("UPDATE uverify SET password_key = ?, is_activated = ? WHERE email = ?");
+                $stmt = $this->connection->prepare("UPDATE uverify SET password_key = ?, is_activated = ? WHERE email = ?");
                 $stmt->bind_param("sis", $forgot_password_key, $inactive, $email);
                 $stmt->execute();
                 $stmt->close();
 
                 $startT = date("Y-m-d H:i:s");
                 $expireT = date('Y-m-d H:i:s', strtotime('+2 hour', strtotime($startT)));
-                $stmt1 = $conn->prepare("INSERT INTO forgot_pass (username, email, password_key, expire) VALUES (?,?,?,?)");
+                $stmt1 = $this->connection->prepare("INSERT INTO forgot_pass (username, email, password_key, expire) VALUES (?,?,?,?)");
                 $stmt1->bind_param("ssss", $uname, $email, $forgot_password_key, $expireT);
                 $stmt1->execute();
                 $stmt1->close();
@@ -114,7 +128,7 @@ class userForgot {
                 $_SESSION['ErrorMessage'] = 'Email does not exist or is incorrect!';
             }
         }
-        $conn->close();
+        $this->connection->close();
     }
 
     /* End forgotPassword() */
@@ -127,7 +141,7 @@ class userForgot {
             $email = trim($_POST['email']);
 
 // Check if username or email is already taken.
-            $stmt = $conn->prepare("SELECT username, email, mkhash FROM uverify WHERE email = ?");
+            $stmt = $this->connection->prepare("SELECT username, email, mkhash FROM uverify WHERE email = ?");
             $stmt->bind_param("s", $email);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -141,14 +155,14 @@ class userForgot {
               
                 $forgot_pin_key = $this->enfKey();
                 $inactive = 0;
-                $stmt = $conn->prepare("UPDATE uverify SET pin_key = ?, is_activated = ? WHERE email = ?");
+                $stmt = $this->connection->prepare("UPDATE uverify SET pin_key = ?, is_activated = ? WHERE email = ?");
                 $stmt->bind_param("sis", $forgot_pin_key, $inactive, $email);
                 $stmt->execute();
                 $stmt->close();
 
                 $startT = date("Y-m-d H:i:s");
                 $expireT = date('Y-m-d H:i:s', strtotime('+2 hour', strtotime($startT)));
-                $stmt1 = $conn->prepare("INSERT INTO forgot_pin (username,email,pin_key,expire) VALUES (?,?,?,?)");
+                $stmt1 = $this->connection->prepare("INSERT INTO forgot_pin (username,email,pin_key,expire) VALUES (?,?,?,?)");
                 $stmt1->bind_param("ssss", $uname, $email, $forgot_pin_key, $expireT);
                 $stmt1->execute();
                 $stmt1->close();
@@ -174,7 +188,7 @@ class userForgot {
                 $_SESSION['ErrorMessage'] = 'Email does not exist or is incorrect.';
             }
         }
-        $conn->close();
+        $this->connection->close();
     }
 
     /* End forgotPIN() */
@@ -195,7 +209,7 @@ class userForgot {
                 $forgotkey = htmlentities($_GET['key']);
                 $hash = htmlentities($_GET['hash']);
 
-                $chck = $conn->prepare("SELECT * FROM forgot_pass WHERE email=? AND mkhash=? AND password_key=?");
+                $chck = $this->connection->prepare("SELECT * FROM forgot_pass WHERE email=? AND mkhash=? AND password_key=?");
                 $chck->bind_param("sss", $email, $hash, $forgotkey);
                 $chck->execute();
                 $okey = $chck->get_result();
@@ -219,7 +233,7 @@ class userForgot {
 // Check that both entered passwords match.
                     if ($password3 === $password2 && $vemail === $email) {
 
-                        $stmt = $conn->prepare("SELECT * FROM uverify WHERE email=? AND mkhash=? AND password_key=? AND recovery_phrase=?");
+                        $stmt = $this->connection->prepare("SELECT * FROM uverify WHERE email=? AND mkhash=? AND password_key=? AND recovery_phrase=?");
                         $stmt->bind_param("sss", $email, $hash, $forgotkey, $recoveryphrase);
                         $stmt->execute();
                         $very = $stmt->get_result();
@@ -227,23 +241,11 @@ class userForgot {
                         if ($very->num_rows === 1) {
                             $dt = $very->fetch_assoc();
                             $duv = $dt['iduv'];
-                            $pin = $dt['mkpin'];
+                            $pin = $dt['mkpin'];                            
 
-                            function randHash($len = 32) {
-                                return substr(sha1(openssl_random_pseudo_bytes(21)), - $len);
-                            }
-
-                            function randKey($len = 32) {
-                                return substr(sha1(openssl_random_pseudo_bytes(13)), - $len);
-                            }
-
-                            function encKey($len = 32) {
-                                return substr(sha1(openssl_random_pseudo_bytes(17)), - $len);
-                            }
-
-                            $ekey = randHash();
-                            $eiv = randkey();
-                            $enck = enckey();
+                            $ekey = $this->randHash();
+                            $eiv = $this->randkey();
+                            $enck = $this->enckey();
 
                             define("ENCRYPT_METHOD", "AES-256-CBC");
                             define("SECRET_KEY", $ekey);
@@ -251,14 +253,14 @@ class userForgot {
 
                            
                             $securing = $this->ende_crypter('encrypt', $password2);
-                            $cml = ende_crypter('encrypt', $email);
+                            $cml = $this->ende_crypter('encrypt', $email);
                             $clenkey = '';
-                            $upd = $conn->query("UPDATE uverify password=?, mktoken=?, mkkey=?, mkhash=, password_key=? WHERE email=? AND recovery_phrase=? AND password_key=?");
+                            $upd = $this->connection->query("UPDATE uverify password=?, mktoken=?, mkkey=?, mkhash=, password_key=? WHERE email=? AND recovery_phrase=? AND password_key=?");
                             $upd->bind_param("sssss", $securing, $ekey, $eiv, $$enck, $clenkey, $email, $recoveryphrase, $forgotkey);
                             $upd->execute();
                             $upd->close();
                             if ($upd === TRUE) {
-                                $stmt = $conn->prepare("UPDATE users SET email = ?, password = ?  WHERE idUser=? AND mkpin=?");
+                                $stmt = $this->connection->prepare("UPDATE users SET email = ?, password = ?  WHERE idUser=? AND mkpin=?");
                                 $stmt->bind_param("sssi", $cml, $securing, $duv, $pin);
                                 $stmt->execute();
                                 $stmt->close();
@@ -273,7 +275,7 @@ class userForgot {
                 } else {
                     $_SESSION['ErrorMessage'] = 'Please fill in all the required fields.';
                 }
-                $conn->close();
+                $this->connection->close();
             }
         }
     }
@@ -289,14 +291,12 @@ class userForgot {
     private function updatePIN() {
         if (isset($_POST['updatePIN'])) {
             if (isset($_GET['email']) && isset($_GET['key']) && isset($_GET['hash'])) {
-                // Require credentials for DB connection.
-                global $conn;
 
                 $email = htmlentities($_GET['email']);
                 $forgotkey = htmlentities($_GET['key']);
                 $hash = htmlentities($_GET['hash']);
 
-                $chck = $conn->prepare("SELECT * FROM forgot_pin WHERE email=? AND mkhash=? AND password_key=?");
+                $chck = $this->connection->prepare("SELECT * FROM forgot_pin WHERE email=? AND mkhash=? AND password_key=?");
                 $chck->bind_param("sss", $email, $hash, $forgotkey);
                 $chck->execute();
                 $okey = $chck->get_result();
@@ -317,7 +317,7 @@ class userForgot {
 // Check that both entered passwords match.
                 if ($vemail === $email) {
                     if (!empty($recoveryphrase) && !empty($email)) {
-                        $very = $conn->query("SELECT * FROM uverify WHERE email='$email' AND pin_key='$forgotkey' AND recovery_phrase='$recoveryphrase'");
+                        $very = $this->connection->query("SELECT * FROM uverify WHERE email='$email' AND pin_key='$forgotkey' AND recovery_phrase='$recoveryphrase'");
 
                         if ($very->num_rows === 1) {
                             $dt = $very->fetch_assoc();
@@ -329,17 +329,17 @@ class userForgot {
 
                             
 
-                            $checkm = ende_crypter('encrypt', $email);
+                            $checkm = $this->ende_crypter('encrypt', $email);
 
-                            $fnal = $conn->query("SELECT idUser, FROM users WHERE email='$checkm'");
+                            $fnal = $this->connection->query("SELECT idUser, FROM users WHERE email='$checkm'");
                             $rt = $fnal->fetch_assoc();
                             if ($fnal->num_rows === 1) {
                                 if ($duv === $rt['idUser']) {
                                     $npin = rand(000000, 999999);
                                     $clenkey = '';
-                                    $upd = $conn->query("UPDATE uverify mkpin='$npin', pin_key='$clenkey' WHERE email='$email' AND recovery_phrase='$recoveryphrase'");
+                                    $upd = $this->connection->query("UPDATE uverify mkpin='$npin', pin_key='$clenkey' WHERE email='$email' AND recovery_phrase='$recoveryphrase'");
                                     if ($upd === TRUE) {
-                                        $stmt = $conn->prepare("UPDATE users SET mkpin=?  WHERE idUser=? AND mkpin=?");
+                                        $stmt = $this->connection->prepare("UPDATE users SET mkpin=?  WHERE idUser=? AND mkpin=?");
                                         $stmt->bind_param("ssi", $npin, $duv, $npin);
                                         $stmt->execute();
                                         $stmt->close();
@@ -357,7 +357,7 @@ class userForgot {
                     $_SESSION['ErrorMessage'] = 'Passwords do not match!';
                 }
             }
-            $conn->close();
+            $this->connection->close();
         }
     }
 

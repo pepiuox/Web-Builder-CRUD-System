@@ -6,9 +6,12 @@
  * @author PePiuoX
  */
 class UserVerify {
+    private $connection;
 
     public function __construct() {
+        global $conn;
 // Require credentials for DB connection.
+        $this->connection = $conn;
         if (isset($_GET['id']) && isset($_GET['code']) && isset($_GET['hash'])) {
             $_SESSION['id'] = $_GET['id'];
             $_SESSION['code'] = $_GET['code'];
@@ -21,7 +24,7 @@ class UserVerify {
     }
 
     private function Verify() {
-        global $conn;
+        
         if (isset($_POST['bverify'])) {
             if (!empty($_POST['id']) && !empty($_POST['code']) && !empty($_POST['hash'])) {
                 $id = $_SESSION['id'];
@@ -34,7 +37,7 @@ class UserVerify {
                 if ($id === $user_email && $code === $act_code && $hash === $hash_code) {
 
 // Cross-reference e-mail and activation_code in database with values from URL.
-                    $stmt = $conn->prepare("SELECT * FROM uverify WHERE email = ? AND mkhash = ? AND activation_code = ?");
+                    $stmt = $this->connection->prepare("SELECT * FROM uverify WHERE email = ? AND mkhash = ? AND activation_code = ?");
                     $stmt->bind_param("sss", $user_email, $hash_code, $act_code);
                     $stmt->execute();
                     $result = $stmt->get_result();
@@ -58,13 +61,13 @@ class UserVerify {
                     $status = 1;
                     $cclean = 'NULL';
 
-                    $stmt1 = $conn->prepare("UPDATE uverify SET mkhash = ?, activation_code = ?, is_activated = ?, banned = ?  WHERE iduv = ?");
+                    $stmt1 = $this->connection->prepare("UPDATE uverify SET mkhash = ?, activation_code = ?, is_activated = ?, banned = ?  WHERE iduv = ?");
                     $stmt1->bind_param("ssiis", $mhash, $cclean, $verified, $bann, $uid);
                     $stmt1->execute();
                     $res1 = $stmt1->affected_rows;
                     $stmt1->close();
 
-                    $stmt2 = $conn->prepare("UPDATE users SET verified = ?, status = ?, email_verified = ? WHERE idUser = ?");
+                    $stmt2 = $this->connection->prepare("UPDATE users SET verified = ?, status = ?, email_verified = ? WHERE idUser = ?");
                     $stmt2->bind_param("iiss", $verified, $status, $cclean, $uid);
                     $stmt2->execute();
                     $res2 = $stmt2->affected_rows;
@@ -86,13 +89,12 @@ class UserVerify {
     /* End Verify() */
 
     private function UpdateVerifyU($uid, $hash_code, $act_code) {
-        global $conn;
 
         $mhash = $this->encKey();
         $verified = 1;
         $bann = 0;
         $cclean = '';
-        $stmt = $conn->prepare("UPDATE uverify SET mkhash = ?, is_activated = ?, banned = ? activation_code = ? WHERE iduv = ? AND mkhash = ? AND  activation_code = ?");
+        $stmt = $this->connection->prepare("UPDATE uverify SET mkhash = ?, is_activated = ?, banned = ? activation_code = ? WHERE iduv = ? AND mkhash = ? AND  activation_code = ?");
         $stmt->bind_param("siissss", $mhash, $verified, $bann, $cclean, $uid, $hash_code, $act_code);
         $stmt->execute();
         if ($stmt->affected_rows === 1) {
@@ -104,12 +106,11 @@ class UserVerify {
     }
 
     private function UpdateUserV($uid, $act_code) {
-        global $conn;
 
         $verified = 1;
         $status = 1;
         $cclean = '';
-        $stmt = $conn->prepare("UPDATE users SET verified = ?, status = ?, email_verified = ? WHERE idUser = ? AND  email_verified = ?");
+        $stmt = $this->connection->prepare("UPDATE users SET verified = ?, status = ?, email_verified = ? WHERE idUser = ? AND  email_verified = ?");
         $stmt->bind_param("iisss", $verified, $status, $cclean, $uid, $act_code);
         $stmt->execute();
         if ($stmt->affected_rows === 1) {

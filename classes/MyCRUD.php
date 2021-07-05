@@ -1,20 +1,26 @@
 <?php
 
 class MyCRUD {
+    
+    private $connection;
+    public function __construct(){
+        global $conn;
+        $this->connection = $conn;
+    }
 
     public function protect($string) {
         return htmlspecialchars(trim($string), ENT_QUOTES);
     }
 
     public function sQueries($tble) {
-        global $conn;
+        
         $sql = "SELECT * FROM $tble";
-        return $conn->query($sql);
+        return $this->connection->query($sql);
     }
 
     public function wQueries($query) {
-        global $conn;
-        return $conn->query($query);
+        
+        return $this->connection->query($query);
     }
 
     public function getID($tble) {
@@ -87,7 +93,7 @@ class MyCRUD {
         <label for=\"' . \$finfo->name . '\">' . ucfirst(\$remp) . ':</label>
         <select type=\"text\" class=\"form-control\" id=\"' . \$finfo->name . '\" name=\"' . \$finfo->name . '\" >';
 
-                    \$qres = \$conn->query(\"SELECT * FROM  {$c_tb}\");
+                    \$qres = \$this->connection->query(\"SELECT * FROM  {$c_tb}\");
                     while (\$rqj = \$qres->fetch_array()) {
                         echo '<option value=\"' . \$rqj['{$c_id}'] . '\">' . \$rqj['{$c_vl}'] . '</option>';
                     }
@@ -236,8 +242,8 @@ class MyCRUD {
     }
 
     public function getDatalist($tble) {
-        global $conn;
-        $total_pages = $conn->query("SELECT * FROM $tble")->num_rows;
+        
+        $total_pages = $this->connection->query("SELECT * FROM $tble")->num_rows;
 
         $colmns = $this->viewColumns($tble);
 
@@ -245,7 +251,7 @@ class MyCRUD {
 
         $num_results_on_page = 10;
 
-        if ($stmt = $conn->prepare("SELECT * FROM $tble LIMIT ?,?")) {
+        if ($stmt = $this->connection->prepare("SELECT * FROM $tble LIMIT ?,?")) {
 
             $calc_page = ($page - 1) * $num_results_on_page;
             $stmt->bind_param('ii', $calc_page, $num_results_on_page);
@@ -276,7 +282,7 @@ class MyCRUD {
                 </td>' . "\n";
                 foreach ($colmns as $colmn) {
                     $fd = $row[$colmn->name];
-                    $resultq = $conn->query("SELECT * FROM table_queries WHERE name_table='$tble' AND col_name='$colmn->name' AND input_type IS NOT NULL");
+                    $resultq = $this->connection->query("SELECT * FROM table_queries WHERE name_table='$tble' AND col_name='$colmn->name' AND input_type IS NOT NULL");
 
                     if ($resultq->num_rows > 0) {
                         while ($trow = $resultq->fetch_array()) {
@@ -287,7 +293,7 @@ class MyCRUD {
                                 $tb = $trow['j_table'];
                                 $id = $trow['j_id'];
                                 $val = $trow['j_value'];
-                                $rest = $conn->query("SELECT * FROM $tb WHERE $id='$fd'");
+                                $rest = $this->connection->query("SELECT * FROM $tb WHERE $id='$fd'");
                                 $tow = $rest->fetch_assoc();
                                 echo '<td><a class="goto" href="buscar.php?w=find&tbl=' . $tb . '&id=' . $fd . '">' . $tow[$val] . '</a></td>';
                             }
@@ -595,12 +601,12 @@ class MyCRUD {
     }
 
     public function joinCols($tble) {
-        global $conn;
+        
         $columns = $this->viewColumns($tble);
         $ncol = $this->getID($tble);
         //
         $sqlq = "SELECT * FROM table_queries WHERE name_table='$tble'";
-        $resultq = $conn->query($sqlq);
+        $resultq = $this->connection->query($sqlq);
         $rowcq = mysqli_num_rows($resultq);
         if ($rowcq > 0) {
             while ($rqu = $resultq->fetch_assoc()) {
@@ -635,7 +641,7 @@ class MyCRUD {
 
                         $sqp1 = "select * from $c_tb";
 
-                        $qres = $conn->query($sqp1);
+                        $qres = $this->connection->query($sqp1);
 
                         while ($options = $qres->fetch_array()) {
                             echo '<option value="' . $options[$c_id] . '">' . $options[$c_vl] . '</option>' . "\n";
@@ -722,7 +728,7 @@ class MyCRUD {
                     // ----------------------
                     $isql = "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" . $tble . "' AND COLUMN_NAME = '" . $c_nm . "'";
 
-                    $iresult = $conn->query($isql);
+                    $iresult = $this->connection->query($isql);
                     $row = mysqli_fetch_array($iresult);
                     $enum_list = explode(",", str_replace("'", "", substr($row['COLUMN_TYPE'], 5, (strlen($row['COLUMN_TYPE']) - 6))));
                     $default_value = '';
@@ -812,7 +818,7 @@ class MyCRUD {
                     // ----------------------
                     $isql = "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" . $tble . "' AND COLUMN_NAME = '" . $dtpe->name . "'";
 
-                    $iresult = $conn->query($isql);
+                    $iresult = $this->connection->query($isql);
                     $row = mysqli_fetch_array($iresult);
                     $enum_list = explode(",", str_replace("'", "", substr($row['COLUMN_TYPE'], 5, (strlen($row['COLUMN_TYPE']) - 6))));
                     $default_value = '';
@@ -839,13 +845,13 @@ class MyCRUD {
 
     // addrow
     public function addData($tble) {
-        global $conn;
+        
 
         $ncol = $this->getID($tble);
         //
         $sql = "SELECT * FROM $tble";
         //
-        $qresult = $conn->query($sql);
+        $qresult = $this->connection->query($sql);
         while ($finfo = $qresult->fetch_field()) {
             if ($finfo->name == $ncol) {
                 continue;
@@ -866,14 +872,14 @@ class MyCRUD {
         $content .= $ptadds . "\n";
         $content .= '$sql = "INSERT INTO ' . $tble . ' (' . $vnames . ')' . "\n";
         $content .= 'VALUES (' . $pnames . ')";' . "\n";
-        $content .= "if (\$conn->query(\$sql) === TRUE) {
+        $content .= "if (\$this->connection->query(\$sql) === TRUE) {
     echo 'Se agrego el dato correctamente';
 header('Location: index.php?w=list&tbl=" . $tble . "');
 } else {
-    echo 'Error: ' . \$conn->error;
+    echo 'Error: ' . \$this->connection->error;
 }
 
-\$conn->close();" . "\n";
+\$this->connection->close();" . "\n";
         $content .= "}";
         $content .= "?> \n";
 
@@ -917,11 +923,11 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
         $content .= "if (isset(\$_POST['editrow'])) { \r\n";
         $content .= $scpt . "\r\n";
         $content .= '        $query="UPDATE `$tble` SET ' . $ecols . ' WHERE ' . $ncol . '=$id ";' . "\r\n";
-        $content .= 'if ($conn->query($query) === TRUE) {
+        $content .= 'if ($this->connection->query($query) === TRUE) {
                echo "Los datos fueron actualizados correctamente.";
                header("Location: index.php?w=list&tbl=' . $tble . '");
             } else {
-               echo "Error en actualizar datos: " . $conn->error;
+               echo "Error en actualizar datos: " . $this->connection->error;
             }' . "\r\n";
         $content .= "    } \r\n";
         $content .= "?> \n";
@@ -1201,10 +1207,10 @@ header('Location: index.php?w=list&tbl=" . $tble . "');
         $content .= "if(isset(\$_POST['editrow'])){" . "\n\n";
         $content .= $ptadds . "\n";
         $content .= '$sql = "UPDATE $tble SET ' . $pnames . ' WHERE $ncol=' . $id . '";' . "\n";
-        $content .= "if (\$conn->query(\$sql) === TRUE) {
+        $content .= "if (\$this->connection->query(\$sql) === TRUE) {
         echo \"New record created successfully\";
     } else {
-        echo \"Error: \" . \$sql . \"<br>\" . \$conn->error;
+        echo \"Error: \" . \$sql . \"<br>\" . \$this->connection->error;
     }" . "\n";
         $content .= " }" . "\n";
         $content .= "?> \n";

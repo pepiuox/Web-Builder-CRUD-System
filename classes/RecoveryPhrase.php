@@ -12,9 +12,14 @@
  * @author PePiuoX
  */
 class RecoveryPhrase {
-
+private $connection;
     //put your code here
     public function __construct() {
+        // Require credentials for DB connection.
+        global $conn;
+        
+        $this->connection = $conn;
+        
         if (isset($_POST["makerecoveryphrase"])) {
             $this->MakeRecoveryPhrase();
         }
@@ -40,8 +45,7 @@ class RecoveryPhrase {
     }
 
     private function MakeRecoveryPhrase() {
-// Require credentials for DB connection.
-        global $conn;
+
         if (isset($_POST['makerecoveryphrase'])) {
 
             if (!empty($_POST['pin']) && !empty($_POST['rvphrase'])) {
@@ -51,7 +55,7 @@ class RecoveryPhrase {
                 $userpin = $_POST['pin'];
                 $cnull = 0;
 
-                $result = $conn->prepare("SELECT * FROM uverify WHERE username = ? AND mkpin = ? AND level = ? AND rp_active = ?");
+                $result = $this->connection->prepare("SELECT * FROM uverify WHERE username = ? AND mkpin = ? AND level = ? AND rp_active = ?");
                 $result->bind_param("sssi", $username, $userpin, $level, $cnull);
                 $result->execute();
                 $resu = $result->get_result();
@@ -63,7 +67,7 @@ class RecoveryPhrase {
                     $crvp = $this->ende_crypter('encrypt', $rvphrase, $secret_key, $secret_iv);
                     $rpac = 1;
 
-                    $update = $conn->prepare("UPDATE uverify SET recovery_phrase = ?, rp_active = ? WHERE username = ? AND mkpin = ? AND level = ?");
+                    $update = $this->connection->prepare("UPDATE uverify SET recovery_phrase = ?, rp_active = ? WHERE username = ? AND mkpin = ? AND level = ?");
                     $update->bind_param("sisss", $crvp, $rpac, $username, $userpin, $level);
                     $update->execute();
                     $nupd = $update->affected_rows;
@@ -95,7 +99,7 @@ class RecoveryPhrase {
             $level = $_SESSION['levels'];
             $cnull = 'NULL';
             if (!empty($username) && !empty($userpin) && !empty($rvphrase)) {
-                $result = $conn->prepare(" SELECT * FROM uverify WHERE username = ? AND mkpin = ? AND level = ? AND activation_code = ?");
+                $result = $this->connection->prepare(" SELECT * FROM uverify WHERE username = ? AND mkpin = ? AND level = ? AND activation_code = ?");
                 $result->bind_param("ss", $username, $userpin, $level, $cnull);
                 $result->execute();
                 $num = $result->affected_rows;
@@ -108,7 +112,7 @@ class RecoveryPhrase {
 
                 if ($num === 1) {
                     $rpac = 1;
-                    $update = $conn->prepare("UPDATE uverify SET recovery_phrase=?, rp_active=? WHERE username=? AND mkpin=? AND level = ?");
+                    $update = $this->connection->prepare("UPDATE uverify SET recovery_phrase=?, rp_active=? WHERE username=? AND mkpin=? AND level = ?");
                     $update->bind_param("sisss", $crvp, $rpac, $username, $userpin, $level);
                     $update->execute();
                     if ($update === TRUE) {

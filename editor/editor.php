@@ -1,3 +1,4 @@
+<!doctype html>
 <?php
 include 'conn.php';
 $base = "http://{$_SERVER['HTTP_HOST']}/grapesjs/";
@@ -34,8 +35,7 @@ if ($w == "editor") {
         $pcontent = $erow['content'];
         $pstyle = $erow['style'];
         // View list pages
-        ?>
-        <!doctype html>
+        ?>        
         <html lang="en">
             <head>
                 <meta charset="utf-8">
@@ -956,7 +956,7 @@ if ($w == "editor") {
     }
 } else if ($w == "add") {
     ?>
-    <!doctype html>
+    
     <html lang="en">
         <head>
             <meta charset="utf-8"/>

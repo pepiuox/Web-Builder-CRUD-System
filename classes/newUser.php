@@ -7,9 +7,13 @@
  */
 class newUser {
 
-    var $baseurl;
+    public $baseurl;
+    private $connection;
 
     public function __construct() {
+        global $conn;
+        $this->connection = $conn;
+        
         $this->baseurl = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
         /* If registration data is posted call createUser function. */
         if (isset($_POST["register"])) {
@@ -34,21 +38,54 @@ class newUser {
     }
 
     public function checkUsername($username) {
-        global $conn;
-        $num = $conn->query("SELECT username FROM uverify WHERE username='$username'")->num_rows;
+        
+        $num = $this->connection->query("SELECT username FROM uverify WHERE username='$username'")->num_rows;
         return $num;
     }
 
     public function checkEmail($email) {
-        global $conn;
-        $num = $conn->query("SELECT email FROM uverify WHERE email='$email'")->num_rows;
+        
+        $num = $this->connection->query("SELECT email FROM uverify WHERE email='$email'")->num_rows;
         return $num;
     }
 
+    // randtoken maker
+   private function randToken($len = 64) {
+        return substr(sha1(openssl_random_pseudo_bytes(21)), - $len);
+    }
+    
+    // randkey maker
+   private function randKey($len = 64) {
+        return substr(sha1(openssl_random_pseudo_bytes(13)), - $len);
+    }
+    
+    // randhash maker
+   private function randHash($len = 64) {
+        return substr(sha1(openssl_random_pseudo_bytes(17)), - $len);
+    }
+    
+    private function ende_crypter($action, $string) {
+        $output = false;
+        $encrypt_method = ENCRYPT_METHOD;
+        $secret_key = SECRET_KEY;
+        $secret_iv = SECRET_IV;
+        // hash
+        $key = hash('sha256', $secret_key);
+        
+        // iv - encrypt method AES-256-CBC expects 16 bytes - else you will get a warning
+        $iv = substr(hash('sha256', $secret_iv), 0, 16);
+        if ($action == 'encrypt') {
+            $output = base64_encode(openssl_encrypt($string, $encrypt_method, $key, 0, $iv));
+        } else if ($action == 'decrypt') {
+            $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
+        }
+        return $output;
+    }
+    
     /* start Register() */
 
     private function Register() {
-        global $conn;
+      
         if (isset($_POST['register'])) {
 
             $username = $this->procheck($_POST['username']);
@@ -83,51 +120,18 @@ class newUser {
 // check first if the password are identical
                 if ($password === $repassword) {
 
-// randtoken maker
-                    function randToken($len = 64) {
-                        return substr(sha1(openssl_random_pseudo_bytes(21)), - $len);
-                    }
-
-// randkey maker
-                    function randKey($len = 64) {
-                        return substr(sha1(openssl_random_pseudo_bytes(13)), - $len);
-                    }
-
-// randhash maker
-                    function randHash($len = 64) {
-                        return substr(sha1(openssl_random_pseudo_bytes(17)), - $len);
-                    }
-
-                    $ekey = randToken();
-                    $eiv = randkey();
-                    $enck = randHash();
+                    $ekey = $this->randToken();
+                    $eiv = $this->randkey();
+                    $enck = $this->randHash();
 
                     define("ENCRYPT_METHOD", "AES-256-CBC");
                     define("SECRET_KEY", $ekey);
-                    define("SECRET_IV", $eiv);
-
-                    function ende_crypter($action, $string) {
-                        $output = false;
-                        $encrypt_method = ENCRYPT_METHOD;
-                        $secret_key = SECRET_KEY;
-                        $secret_iv = SECRET_IV;
-// hash
-                        $key = hash('sha256', $secret_key);
-
-// iv - encrypt method AES-256-CBC expects 16 bytes - else you will get a warning
-                        $iv = substr(hash('sha256', $secret_iv), 0, 16);
-                        if ($action == 'encrypt') {
-                            $output = base64_encode(openssl_encrypt($string, $encrypt_method, $key, 0, $iv));
-                        } else if ($action == 'decrypt') {
-                            $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
-                        }
-                        return $output;
-                    }
+                    define("SECRET_IV", $eiv);                 
 
                     $newid = uniqid(rand(), false);
-                    $pass = ende_crypter('encrypt', $password);
-                    $cml = ende_crypter('encrypt', $email);
-                    $eusr = ende_crypter('encrypt', $username);
+                    $pass = $this->ende_crypter('encrypt', $password);
+                    $cml = $this->ende_crypter('encrypt', $email);
+                    $eusr = $this->ende_crypter('encrypt', $username);
                     $pin = rand(000000, 999999);
                     $code = randkey();
                     $status = 0;
@@ -137,7 +141,7 @@ class newUser {
                     $is_actd = 0;
 
 // adding data in table uverify
-                    $stmt1 = $conn->prepare("INSERT INTO uverify (iduv,username,email,password,mktoken,mkkey,mkhash,mkpin,activation_code,is_activated,banned) "
+                    $stmt1 = $this->connection->prepare("INSERT INTO uverify (iduv,username,email,password,mktoken,mkkey,mkhash,mkpin,activation_code,is_activated,banned) "
                             . "VALUES (?,?,?,?,?,?,?,?,?,?,?)");
                     $stmt1->bind_param("sssssssssii", $newid, $username, $email, $pass, $ekey, $eiv, $enck, $pin, $code, $is_actd, $ban);
                     $stmt1->execute();
@@ -145,7 +149,7 @@ class newUser {
                     $stmt1->close();
 
 // adding data in table users and info
-                    $stmt = $conn->prepare("INSERT INTO users (idUser,username,email,password,status,ip,signup_time,email_verified,document_verified,mobile_verified) "
+                    $stmt = $this->connection->prepare("INSERT INTO users (idUser,username,email,password,status,ip,signup_time,email_verified,document_verified,mobile_verified) "
                             . "VALUES (?,?,?,?,?,?,?,?,?,?)");
                     $stmt->bind_param("ssssisssii", $newid, $eusr, $cml, $pass, $status, $ip, $time, $code, $dvd, $mvd);
                     $stmt->execute();
@@ -153,7 +157,7 @@ class newUser {
                     $stmt->close();
 
 // adding data in table info
-                    $info = $conn->prepare("INSERT INTO profiles(idp,mkhash) VALUES (?,?)");
+                    $info = $this->connection->prepare("INSERT INTO profiles(idp,mkhash) VALUES (?,?)");
                     $info->bind_param("ss", $newid, $enck);
                     $info->execute();
                     $inst3 = $info->affected_rows;
@@ -161,7 +165,7 @@ class newUser {
 
                     if ($inst1 === 1 && $inst2 === 1 && $inst3 === 1) {
 // message for PIN save                       
-                        $query = $conn->prepare("SELECT * FROM uverify WHERE username=? AND email=? AND password=?");
+                        $query = $this->connection->prepare("SELECT * FROM uverify WHERE username=? AND email=? AND password=?");
                         $query->bind_param("sss", $username, $email, $pass);
                         $query->execute();
                         $result = $query->get_result();
@@ -186,7 +190,7 @@ class newUser {
                 }
             }
         }
-        $conn->close();
+        $this->connection->close();
     }
 
     /*
@@ -216,9 +220,9 @@ class newUser {
     }
 
     private function updatePIN($upid, $upin) {
-        global $conn;
+        
 
-        $update = $conn->prepare("UPDATE users SET mkpin='$upin' WHERE idUser='$upid '");
+        $update = $this->connection->prepare("UPDATE users SET mkpin='$upin' WHERE idUser='$upid '");
         $update->bind_param("ss", $upin, $upid);
         $update->execute();
         if ($update->affected_rows === 1) {
@@ -229,7 +233,7 @@ class newUser {
         $update->close();
     }
 
-    public function generateRandStr($length) {
+    private function generateRandStr($length) {
         $randstr = "";
         for ($i = 0; $i < $length; $i++) {
             $randnum = mt_rand(0, 61);

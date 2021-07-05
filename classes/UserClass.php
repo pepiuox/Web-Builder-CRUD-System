@@ -10,16 +10,17 @@
 
 class UserClass {
 
-    var $baseurl;
-
+    public $baseurl;
+    private $connection;
     /*
      * __constructor()
      * Constructor will be called every time Login class is called ($login = new Login())
      */
 
     public function __construct() {
-
-
+        // Require credentials for DB connection.
+        global $conn;
+        $this->connection = $conn;
         $this->baseurl = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
         define("COOKIE_EXPIRE", 60 * 60 * 24 * 7);  //7 days by default
         define("COOKIE_PATH", "/");  //Avaible in whole domain
@@ -79,8 +80,7 @@ class UserClass {
      */
 
     private function Login() {
-// Require credentials for DB connection.
-        global $conn;
+
 // Check that data has been submited.
         if (isset($_POST['signin'])) {
 // Check that both username and password fields are filled with values.
@@ -103,7 +103,7 @@ class UserClass {
                         define("COOKIE_PATH", "/");  //Avaible in whole domain
                     }
 
-                    $stmt = $conn->prepare("SELECT * FROM uverify WHERE email = ? AND mkpin = ?");
+                    $stmt = $this->connection->prepare("SELECT * FROM uverify WHERE email = ? AND mkpin = ?");
                     $stmt->bind_param("ss", $useremail, $userpin);
                     $stmt->execute();
                     //fetching result would go here, but will be covered later
@@ -149,7 +149,7 @@ class UserClass {
                                 $_SESSION['RecoveryMessage'] = 1;
                             }
 
-                            $stmt1 = $conn->prepare("SELECT * FROM users WHERE username = ? AND email = ? AND password = ? AND mkpin = ?");
+                            $stmt1 = $this->connection->prepare("SELECT * FROM users WHERE username = ? AND email = ? AND password = ? AND mkpin = ?");
                             $stmt1->bind_param("ssss", $cus, $mail, $passw, $userpin);
                             $stmt1->execute();
                             //fetching result would go here, but will be covered later
@@ -172,13 +172,13 @@ class UserClass {
 
                             $newid = uniqid(rand(), false);
 
-                            $up1 = $conn->prepare("UPDATE uverify SET iduv = ? , mkhash = ? WHERE iduv = ? AND password = ? AND mkhash = ?");
+                            $up1 = $this->connection->prepare("UPDATE uverify SET iduv = ? , mkhash = ? WHERE iduv = ? AND password = ? AND mkhash = ?");
                             $up1->bind_param("sssss", $newid, $enck, $iduv, $passw, $secret_hs);
                             $up1->execute();
                             $inst1 = $up1->affected_rows;
                             $up1->close();
 
-                            $pro = $conn->prepare("UPDATE profiles SET mkhash = ? WHERE mkhash = ?");
+                            $pro = $this->connection->prepare("UPDATE profiles SET mkhash = ? WHERE mkhash = ?");
                             $pro->bind_param("ss", $enck, $secret_hs);
                             $pro->execute();
                             $inst2 = $pro->affected_rows;
@@ -213,7 +213,7 @@ class UserClass {
                 }
             }
         }
-        $conn->close();
+        $this->connection->close();
     }
 
     /* End Login() */
@@ -349,15 +349,14 @@ class UserClass {
      */
 
     private function newPassword() {
-        global $conn;
+
 // Values from password_reset.php URL.
         $email = htmlspecialchars($_GET['email']);
         $forgot_password_key = htmlspecialchars($_GET['key']);
 
 // Require credentials for DB connection.
 
-
-        $stmt = $conn->prepare("SELECT email,fpassword_key FROM uverify WHERE email = ? AND fpassword_key = ?");
+        $stmt = $this->connection->prepare("SELECT email,fpassword_key FROM uverify WHERE email = ? AND fpassword_key = ?");
         $stmt->bind_param("ss", $email, $forgot_password_key);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -368,14 +367,12 @@ class UserClass {
         } else {
             $_SESSION['ErrorMessage'] = 'Please contact support at contact@labemotion.net';
         }
-        $conn->close();
+        $this->connection->close();
     }
 
     /* End newPassword() */
 
     private function memberRegistration() {
-// Require credentials for DB connection.
-        global $conn;
 // Variables for createUser()
         $username = trim($_POST['username']);
         $password = trim($_POST['password']);
@@ -390,7 +387,7 @@ class UserClass {
             if (!empty($username) && !empty($password) && !empty($email)) {
 
 // Check if username or email is already taken.
-                $stmt = $conn->prepare("SELECT username, email FROM users WHERE username = ? OR email = ?");
+                $stmt = $this->connection->prepare("SELECT username, email FROM users WHERE username = ? OR email = ?");
                 $stmt->bind_param("ss", $username, $email);
                 $stmt->execute();
                 $result = $stmt->get_result();
@@ -412,7 +409,7 @@ class UserClass {
                 } else {
 // Insert data into database
                     $code = substr(md5(mt_rand()), 0, 15);
-                    $stmt = $conn->prepare("INSERT INTO users (username, email, password, activation_code) VALUES (?,?,?,?)");
+                    $stmt = $this->connection->prepare("INSERT INTO users (username, email, password, activation_code) VALUES (?,?,?,?)");
                     $stmt->bind_param("ssss", $username, $email, $securing, $code);
                     $stmt->execute();
                     $stmt->close();
@@ -449,16 +446,16 @@ class UserClass {
             header('Location: register.php');
             exit();
         }
-        $conn->close();
+        $this->connection->close();
     }
 
     /* End Registration() */
 
     private function updateUserField($username, $field, $value) {
-        global $conn;
+        
         $q = "UPDATE uverify SET " . $field . " = '$value' WHERE username = '$username'";
-        return $conn->query($q);
-        $conn->close();
+        return $this->connection->query($q);
+        $this->connection->close();
     }
 
     public function isAdmin() {
