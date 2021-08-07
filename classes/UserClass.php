@@ -305,7 +305,7 @@ class UserClass {
     private function SessionActivity() {
         if ($_SESSION['last_activity'] < time() - $_SESSION['expire_time']) { //have we expired?
             //redirect to logout.php
-            header('Location: http://yoursite.com/logout.php'); //change yoursite.com to the name of you site!!
+            header('Location: http://yoursite.com/signin/logout.php'); //change yoursite.com to the name of you site!!
         } else { //if we haven't expired:
             $_SESSION['last_activity'] = time(); //this was the moment of last activity.
         }
